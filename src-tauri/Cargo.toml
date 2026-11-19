@@ -1,0 +1,16 @@
+[package]
+name = "neoapp"
+version = "0.2.0"
+description = "NeoApp Photo Studio"
+authors = ["NeoApp"]
+edition = "2021"
+
+[lib]
+name = "neoapp_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }

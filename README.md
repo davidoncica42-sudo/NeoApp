@@ -1,95 +1,80 @@
 # NeoApp
-### Professional Photo Editing Studio
 
-**NeoApp** es un editor profesional de fotografías multiplataforma diseñado para Windows 11 y tablets.
+**NeoApp Photo Studio** es el inicio de un editor fotográfico para PC y tablet. La interfaz se adapta a pantallas táctiles y de escritorio; las fotos se abren, editan y exportan en el propio dispositivo.
 
-Su objetivo es ofrecer herramientas avanzadas de edición, una interfaz moderna y una experiencia fluida, independientemente del dispositivo.
+## Lo que funciona ahora
 
-## ✨ Características principales
+- Abrir JPG, PNG, WebP, AVIF y GIF desde el dispositivo o arrastrarlos al lienzo.
+- Ajustar exposición, contraste, iluminaciones, sombras, temperatura y saturación con vista previa inmediata.
+- Aplicar cinco estilos de color y comparar la foto original con el resultado.
+- Recortar al centro en proporciones libre, 1:1, 4:5, 3:2 o 16:9; girar y voltear horizontalmente.
+- Cambiar la visibilidad y opacidad de la capa de imagen.
+- Deshacer y rehacer cambios de ajustes; usar atajos de teclado.
+- Exportar a JPEG, PNG o WebP.
+- Instalar como aplicación web progresiva cuando se sirva por HTTPS.
+- Empaquetar la versión de escritorio de Windows con Tauri 2.
 
-- Edición profesional de imágenes.
-- Sistema de capas y máscaras.
-- Ajustes de color avanzados.
-- Filtros personalizables.
-- Recorte, rotación y transformación.
-- Herramientas de selección.
-- Eliminación de fondos.
-- Procesamiento de imágenes de alta resolución.
-- Historial de edición y deshacer/rehacer.
-- Guardado automático de proyectos.
-- Exportación PNG, JPG y WebP.
+La imagen de muestra del editor es una ilustración vectorial incluida en el proyecto. Sirve para probar los controles antes de abrir una foto propia.
 
-## 🖥️ Plataformas
+## Plataformas
 
-**Windows 11**
-- Interfaz profesional completa.
-- Compatibilidad con ratón y teclado.
-- Atajos de teclado.
-- Paneles personalizables.
+**Windows 11:** ventana de escritorio nativa mediante Tauri 2. La interfaz funciona en tamaños de escritorio y el instalador se genera con Tauri.
 
-**Tablets**
-- Interfaz táctil adaptativa.
-- Controles ampliados.
-- Gestos táctiles.
-- Compatibilidad con lápices digitales cuando estén disponibles.
+**Tablets:** versión web progresiva adaptable, instalable desde un navegador compatible cuando la app se publique en un sitio HTTPS.
 
-## 🎨 Diseño
+## Desarrollo
 
-NeoApp utilizará una identidad visual oscura y profesional.
+Requisitos: Node.js 20.19 o posterior (o 22.12 o posterior) para Vite 8. Para compilar la aplicación de Windows también se necesitan Rust y los componentes de compilación de escritorio requeridos por Tauri.
 
-Características visuales:
-- Tema oscuro.
-- Paneles modernos.
-- Animaciones suaves.
-- Iconografía consistente.
-- Transiciones cuidadas.
-- Diseño adaptable.
+Instala las dependencias y abre el editor en modo desarrollo:
 
-## 🛠️ Tecnologías
+    npm install
+    npm run dev
 
-| Tecnología | Función |
+Para ver la interfaz desde una tablet en la misma red local durante el desarrollo:
+
+    npm run dev -- --host 0.0.0.0
+
+Genera la versión web:
+
+    npm run build
+
+Abre o empaqueta NeoApp para Windows:
+
+    npm run tauri -- dev
+    npm run tauri -- build
+
+El instalador de Windows queda dentro de src-tauri/target/release/bundle/.
+
+## Organización del código
+
+- src/App.tsx: interfaz y flujo principal del editor.
+- src/components/: controles reutilizables, vista del histograma, iconos y diálogo de exportación.
+- src/data/presets.ts: estilos de color incluidos.
+- src/hooks/useEditorState.ts: ajustes e historial de deshacer/rehacer.
+- src/lib/imageProcessing.ts: filtros, lectura del histograma y exportación mediante Canvas.
+- public/: icono, manifiesto PWA, caché sin conexión e ilustración de muestra.
+- src-tauri/: configuración y punto de entrada de escritorio para Tauri 2.
+
+## Privacidad y límites de esta primera versión
+
+- Las fotos no se cargan a un servidor. La vista previa y el archivo exportado se generan en el dispositivo.
+- Se aceptan archivos de hasta 100 MB y 100 megapíxeles. La exportación limita el tamaño a 48 megapíxeles y 12.000 px por lado para controlar el uso de memoria.
+- Los ajustes de color se aplican con filtros Canvas del navegador. Iluminaciones y sombras tienen un efecto aproximado; las curvas y el revelado RAW todavía no están implementados.
+- Esta versión contiene una sola capa de imagen, con control de visibilidad y opacidad. Las capas múltiples, máscaras, selecciones, eliminación de fondo y guardado de proyectos son trabajo futuro.
+- El historial cubre los ajustes y estilos; el recorte y la transformación se configuran por separado.
+- El navegador puede consumir memoria adicional al abrir fotos grandes. Cerrar o reemplazar una foto libera la vista previa anterior.
+
+## Tecnologías
+
+| Tecnología | Uso |
 |---|---|
-| React | Interfaz |
-| TypeScript | Código tipado |
-| Tauri 2 | Aplicación de escritorio |
-| Rust | Motor nativo |
-| WebGL | Procesamiento gráfico |
-| Vite | Desarrollo y compilación |
+| React + TypeScript | Interfaz adaptable y controles |
+| Vite | Desarrollo y compilación web |
+| Canvas 2D | Previsualización y exportación local |
+| Tauri 2 + Rust | Aplicación de escritorio para Windows |
+| PWA | Instalación web para tablets |
 
-## 🏗️ Arquitectura
+**Versión:** 0.2.0 · **Estado:** primera versión funcional en desarrollo.
 
-El proyecto estará dividido en módulos independientes:
-
-- Core: motor principal.
-- Editor: herramientas de edición.
-- Layers: gestión de capas.
-- Filters: filtros y efectos.
-- Color: ajustes cromáticos.
-- Export: exportación.
-- UI: interfaz visual.
-- Storage: proyectos y archivos.
-- Platform: adaptación por dispositivo.
-
-## 🔒 Estabilidad
-
-NeoApp priorizará:
-- Gestión eficiente de memoria.
-- Recuperación ante errores.
-- Procesamiento por tareas.
-- Validación de archivos.
-- Separación de módulos.
-- Pruebas de funcionamiento.
-
-## 📦 Estado del proyecto
-
-**Versión:** 0.1.0
-
-**Estado:** Desarrollo inicial.
-
-**Nombre:** NeoApp Professional Photo Editor.
-
-**Licencia:** Determinado.
-
----
-
-© 2026 NeoApp. All rights reserved.
+© 2026 NeoApp.
