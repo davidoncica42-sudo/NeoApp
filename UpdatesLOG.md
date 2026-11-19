@@ -1,5 +1,15 @@
 # Historial de cambios
 
+## 0.2.5 — App lanzada!!!
+
+- Añadimos soporte a tabletas
+- Vistas previas
+- Devs preparados
+- Sitios webs en construccion
+- Algunos bugs arreglados
+- Nueva foto de app
+  ## 0.3.0 - Proximamente: funciones Neón (premium)
+  
 ## 0.2.0 — Editor inicial
 
 - Añadida interfaz oscura adaptable a PC y tablet.
