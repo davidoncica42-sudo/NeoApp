@@ -9,6 +9,7 @@
 - Algunos bugs arreglados
 - Nueva foto de app
   ## 0.3.0 - Proximamente: funciones Neón (premium)
+  ## 0.0.5 (Plataforma)— Proximamente: Lanzamiento de webs la app necesitara cuentas registrdas para la 0.3.0
   
 ## 0.2.0 — Editor inicial
 
