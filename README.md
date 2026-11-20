@@ -20,7 +20,7 @@ La imagen de muestra del editor es una ilustración vectorial incluida en el pro
 
 **Windows 11:** ventana de escritorio nativa mediante Tauri 2. La interfaz funciona en tamaños de escritorio y el instalador se genera con Tauri.
 
-**Tablets:** versión web progresiva adaptable, instalable desde un navegador compatible cuando la app se publique en un sitio HTTPS.
+**Tabletas:** versión web progresiva adaptable, instalable desde un navegador compatible cuando la app se publique en HTTPS. También se puede generar un APK de Android con los pasos de abajo.
 
 ## Desarrollo
 
@@ -42,9 +42,27 @@ Genera la versión web:
 Abre o empaqueta NeoApp para Windows:
 
     npm run tauri -- dev
-    npm run tauri -- build
+    npm run build:windows
 
-El instalador de Windows queda dentro de src-tauri/target/release/bundle/.
+También puedes extraer el ZIP del repositorio y abrir `CREAR-INSTALADOR-WINDOWS.bat`. El script instala las dependencias del proyecto y genera el instalador de Windows. Necesitas Node.js 22.12 o posterior, Rust y las herramientas de C++ de Visual Studio requeridas por Tauri.
+
+El instalador `.exe` de Windows queda en `src-tauri/target/release/bundle/nsis/`.
+
+### Instalar en una tableta Android
+
+Para compilar un APK en tu equipo, instala Android Studio con Android SDK, NDK y JDK 17; luego ejecuta:
+
+    npm ci
+    npm run init:android
+    npm run build:android:apk
+
+El APK de prueba queda en `src-tauri/gen/android/app/build/outputs/apk/`. Es una compilación de depuración, válida para instalar y probar en una tableta Android; no es una versión firmada para Google Play.
+
+### Descargar los instaladores ya compilados
+
+El flujo de GitHub Actions `Crear instaladores` se ejecuta al actualizar la rama `main` o desde la pestaña **Actions**. Al terminar, abre esa ejecución y descarga los artefactos `NeoApp-Windows` y `NeoApp-Android-APK`.
+
+El ZIP que GitHub ofrece desde **Code → Download ZIP** contiene el código fuente y el script de Windows; GitHub no incluye dentro de ese ZIP los instaladores compilados. Para descargar los `.exe` y `.apk`, usa los artefactos del flujo de Actions.
 
 ## Organización del código
 
