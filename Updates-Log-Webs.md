@@ -1,6 +1,7 @@
   ## 0.1.5 — Reward global en la plataforma!!!
   ## 0.1.5 - Pagina lanzada!!!
   - Pagina lanzada
+  - [NeoApp Plataform](https://davidoncica42-sudo.github.io/NeoApp-Plataform/)
   - 
   - **El retraso de las cuentas seguirra...**
   - 
