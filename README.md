@@ -96,3 +96,4 @@ El ZIP que GitHub ofrece desde **Code → Download ZIP** contiene el código fue
 **Versión:** 0.2.0 · **Estado:** primera versión funcional en desarrollo.
 
 © 2026 NeoApp.
+[Centro de Info/Ayuda](https://sites.google.com/view/neoapp-help/info-copy)
