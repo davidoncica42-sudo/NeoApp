@@ -1,7 +1,7 @@
   ## 0.1.5 — Reward global en la plataforma!!!
   ## 0.1.5 - Pagina lanzada!!!
   - Pagina lanzada
-  - [NeoApp Plataform](https://davidoncica42-sudo.github.io/NeoApp-Plataform/) ||| [NeoApp Build](https://github.com/davidoncica42-sudo/NeoApp-Plataform) (The build we get /hive for more updates beacuse: copyright) 
+  - [NeoApp Plataform](https://davidoncica42-sudo.github.io/NeoApp-Plataform/) ||| [NeoApp Build](https://github.com/davidoncica42-sudo/NeoApp-Plataform) (The build we get /hive for more updates beacuse: copyright) [Centro de Ayuda](https://sites.google.com/view/neoapp-help/info-copy)
   - 
   - **El retraso de las cuentas seguirra...**
   - 
