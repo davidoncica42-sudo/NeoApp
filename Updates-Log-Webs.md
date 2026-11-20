@@ -1,4 +1,14 @@
-
+  ## 0.1.5 — Reward global en la plataforma!!!
+  ## 0.1.5 - Pagina lanzada!!!
+  - Pagina lanzada
+  - 
+  - **El retraso de las cuentas seguirra...**
+  - 
+  -   Proximamente
+  - 
+  -  ## 0.2.0 - Cuentas lanzadas pero la app gratuita el limite hasta el 2028...
+  - 
+  - 
 
   ## 0.1.0 — En testeo la pagina...
 
@@ -6,12 +16,7 @@
   - CNAME en curso
   - Aprendiendo con los agentes
 
-    Proximamente
-    .
-    .
-    ## 0.1.5 — Reward global en la plataforma
-    .
-    .
+
 ## 0.0.5 — Plataform changes
 - Unos cuantos problemas al registrar dominio
 - Al final mejor en GitHub
