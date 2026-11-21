@@ -5,10 +5,10 @@
 ## Lo que funciona ahora
 
 - Abrir JPG, PNG, WebP, AVIF y GIF desde el dispositivo o arrastrarlos al lienzo.
-- Ajustar exposición, contraste, iluminaciones, sombras, temperatura y saturación con vista previa inmediata.
+- Ajustar exposición, contraste, iluminaciones, sombras, temperatura, saturación, intensidad y matiz con vista previa inmediata.
 - Aplicar cinco estilos de color y comparar la foto original con el resultado.
-- Recortar al centro en proporciones libre, 1:1, 4:5, 3:2 o 16:9; girar y voltear horizontalmente.
-- Cambiar la visibilidad y opacidad de la capa de imagen.
+- Recortar en proporciones original, 1:1, 4:5, 3:2, 16:9, 2:3, 5:7, 9:16 y 16:10; girar y voltear horizontalmente.
+- Añadir hasta 20 capas de imagen; seleccionar, reordenar, ocultar, eliminar, colocar, cambiar el tamaño y ajustar la opacidad de cada capa.
 - Deshacer y rehacer cambios de ajustes; usar atajos de teclado.
 - Exportar a JPEG, PNG o WebP.
 - Instalar como aplicación web progresiva cuando se sirva por HTTPS.
@@ -79,7 +79,7 @@ El ZIP que GitHub ofrece desde **Code → Download ZIP** contiene el código fue
 - Las fotos no se cargan a un servidor. La vista previa y el archivo exportado se generan en el dispositivo.
 - Se aceptan archivos de hasta 100 MB y 100 megapíxeles. La exportación limita el tamaño a 48 megapíxeles y 12.000 px por lado para controlar el uso de memoria.
 - Los ajustes de color se aplican con filtros Canvas del navegador. Iluminaciones y sombras tienen un efecto aproximado; las curvas y el revelado RAW todavía no están implementados.
-- Esta versión contiene una sola capa de imagen, con control de visibilidad y opacidad. Las capas múltiples, máscaras, selecciones, eliminación de fondo y guardado de proyectos son trabajo futuro.
+- El documento admite hasta 20 capas de imagen. Las máscaras, selecciones, eliminación de fondo y guardado de proyectos siguen pendientes.
 - El historial cubre los ajustes y estilos; el recorte y la transformación se configuran por separado.
 - El navegador puede consumir memoria adicional al abrir fotos grandes. Cerrar o reemplazar una foto libera la vista previa anterior.
 
@@ -97,3 +97,4 @@ El ZIP que GitHub ofrece desde **Code → Download ZIP** contiene el código fue
 
 © 2026 NeoApp.
 [Centro de Info/Ayuda](https://sites.google.com/view/neoapp-help/info-copy)
+

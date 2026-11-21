@@ -10,10 +10,19 @@ export interface ExportOptions {
   visible: boolean;
 }
 
+export interface ExportOverlay {
+  image: HTMLImageElement;
+  x: number;
+  y: number;
+  scale: number;
+  opacity: number;
+  visible: boolean;
+}
+
 export function filterForAdjustments(adjustments: AdjustmentValues) {
   const brightness = Math.max(0.25, 1 + adjustments.exposure / 100 + adjustments.shadows / 500);
   const contrast = Math.max(0.25, 1 + adjustments.contrast / 100 - adjustments.highlights / 800);
-  const saturation = Math.max(0, 1 + adjustments.saturation / 100);
+  const saturation = Math.max(0, 1 + (adjustments.saturation + adjustments.vibrance * 0.55) / 100);
   const sepia = Math.max(0, adjustments.temperature) / 100 * 0.2;
   const hue = adjustments.temperature < 0 ? ' hue-rotate(' + (adjustments.temperature * 0.22) + 'deg)' : '';
   return [
@@ -21,7 +30,7 @@ export function filterForAdjustments(adjustments: AdjustmentValues) {
     'contrast(' + contrast.toFixed(3) + ')',
     'saturate(' + saturation.toFixed(3) + ')',
     'sepia(' + sepia.toFixed(3) + ')',
-  ].join(' ') + hue;
+  ].join(' ') + hue + ' hue-rotate(' + adjustments.hue + 'deg)';
 }
 
 export function loadImage(src: string): Promise<HTMLImageElement> {
@@ -54,7 +63,7 @@ export function createHistogram(image: HTMLImageElement): number[] {
   return bins.map((value) => value / peak);
 }
 
-export async function exportImage(image: HTMLImageElement, options: ExportOptions, adjustments: AdjustmentValues): Promise<Blob> {
+export async function exportImage(image: HTMLImageElement, options: ExportOptions, adjustments: AdjustmentValues, overlays: ExportOverlay[] = []): Promise<Blob> {
   if (!image.complete || !image.naturalWidth || !image.naturalHeight) {
     throw new Error('La imagen todavía no está lista.');
   }
@@ -75,7 +84,10 @@ export async function exportImage(image: HTMLImageElement, options: ExportOption
   rotatedContext.translate(rotated.width / 2, rotated.height / 2);
   rotatedContext.rotate((normalizedRotation * Math.PI) / 180);
   rotatedContext.scale(options.flipHorizontal ? -1 : 1, 1);
-  rotatedContext.drawImage(image, -width / 2, -height / 2, width, height);
+  if (options.visible) {
+    rotatedContext.globalAlpha = Math.max(0, Math.min(1, options.opacity));
+    rotatedContext.drawImage(image, -width / 2, -height / 2, width, height);
+  }
 
   let sx = 0;
   let sy = 0;
@@ -108,6 +120,15 @@ export async function exportImage(image: HTMLImageElement, options: ExportOption
     context.globalAlpha = Math.max(0, Math.min(1, options.opacity));
     context.drawImage(rotated, sx, sy, sw, sh, 0, 0, output.width, output.height);
   }
+  context.filter = filterForAdjustments(adjustments);
+  overlays.forEach((overlay) => {
+    if (!overlay.visible || !overlay.image.complete) return;
+    const overlayWidth = output.width * Math.max(0.05, Math.min(1.5, overlay.scale / 100));
+    const overlayHeight = overlayWidth * overlay.image.naturalHeight / Math.max(1, overlay.image.naturalWidth);
+    context.globalAlpha = Math.max(0, Math.min(1, overlay.opacity / 100));
+    context.drawImage(overlay.image, output.width * overlay.x / 100 - overlayWidth / 2, output.height * overlay.y / 100 - overlayHeight / 2, overlayWidth, overlayHeight);
+  });
+  context.globalAlpha = 1;
 
   const blob = await new Promise<Blob | null>((resolve) => output.toBlob(resolve, options.format, options.quality));
   rotated.width = 0;
@@ -117,3 +138,4 @@ export async function exportImage(image: HTMLImageElement, options: ExportOption
   if (!blob) throw new Error('No se pudo generar el archivo. Prueba con otro formato.');
   return blob;
 }
+

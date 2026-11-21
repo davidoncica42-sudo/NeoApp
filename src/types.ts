@@ -5,6 +5,8 @@ export interface AdjustmentValues {
   shadows: number;
   temperature: number;
   saturation: number;
+  vibrance: number;
+  hue: number;
 }
 
 export type AdjustmentKey = keyof AdjustmentValues;
@@ -16,6 +18,8 @@ export const INITIAL_ADJUSTMENTS: AdjustmentValues = {
   shadows: 0,
   temperature: 0,
   saturation: 0,
+  vibrance: 0,
+  hue: 0,
 };
 
 export interface Preset {
@@ -29,3 +33,4 @@ export interface Preset {
 export type EditorTool = 'adjust' | 'crop' | 'looks' | 'layers';
 
 export type ExportFormat = 'image/png' | 'image/jpeg' | 'image/webp';
+

@@ -5,12 +5,13 @@ import { Icon, type IconName } from './components/Icon';
 import { Slider } from './components/Slider';
 import { PRESETS } from './data/presets';
 import { useEditorState } from './hooks/useEditorState';
-import { createHistogram, exportImage, filterForAdjustments, loadImage } from './lib/imageProcessing';
-import type { AdjustmentKey, EditorTool, ExportFormat } from './types';
+import { createHistogram, exportImage, filterForAdjustments, loadImage, type ExportOverlay } from './lib/imageProcessing';
+import { INITIAL_ADJUSTMENTS, type AdjustmentKey, type EditorTool, type ExportFormat } from './types';
 
 const DEMO_IMAGE = import.meta.env.BASE_URL + 'demo-landscape.svg';
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const MAX_IMAGE_PIXELS = 100_000_000;
+const MAX_IMAGE_LAYERS = 20;
 
 const tools: { id: EditorTool; label: string; icon: IconName }[] = [
   { id: 'adjust', label: 'Ajustes', icon: 'adjust' },
@@ -26,6 +27,8 @@ const adjustmentRows: { key: AdjustmentKey; label: string; min: number; max: num
   { key: 'shadows', label: 'Sombras', min: -100, max: 100 },
   { key: 'temperature', label: 'Temperatura', min: -100, max: 100 },
   { key: 'saturation', label: 'Saturación', min: -100, max: 100 },
+  { key: 'vibrance', label: 'Intensidad', min: -100, max: 100 },
+  { key: 'hue', label: 'Matiz', min: -180, max: 180 },
 ];
 
 const cropOptions: { label: string; ratio: number | null }[] = [
@@ -34,7 +37,17 @@ const cropOptions: { label: string; ratio: number | null }[] = [
   { label: '4 : 5', ratio: 4 / 5 },
   { label: '3 : 2', ratio: 3 / 2 },
   { label: '16 : 9', ratio: 16 / 9 },
+  { label: '2 : 3', ratio: 2 / 3 },
+  { label: '5 : 7', ratio: 5 / 7 },
+  { label: '9 : 16', ratio: 9 / 16 },
+  { label: '16 : 10', ratio: 16 / 10 },
 ];
+
+interface OverlayLayer extends ExportOverlay {
+  id: string;
+  name: string;
+  src: string;
+}
 
 interface PhotoMeta {
   name: string;
@@ -45,6 +58,7 @@ interface PhotoMeta {
 export function App() {
   const editor = useEditorState();
   const fileInput = useRef<HTMLInputElement>(null);
+  const addLayerInput = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLImageElement | null>(null);
   const fileUrlRef = useRef<string | null>(null);
   const loadTokenRef = useRef(0);
@@ -58,6 +72,9 @@ export function App() {
   const [flipHorizontal, setFlipHorizontal] = useState(false);
   const [layerOpacity, setLayerOpacity] = useState(100);
   const [layerVisible, setLayerVisible] = useState(true);
+  const [overlayLayers, setOverlayLayers] = useState<OverlayLayer[]>([]);
+  const overlayLayersRef = useRef<OverlayLayer[]>([]);
+  const [selectedLayerId, setSelectedLayerId] = useState('base');
   const [isComparing, setIsComparing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [showExport, setShowExport] = useState(false);
@@ -69,7 +86,7 @@ export function App() {
     window.setTimeout(() => setToast(''), 3000);
   }, []);
 
-  const acceptImage = useCallback(async (file: File) => {
+  const acceptImage = useCallback(async (file: File, addAsLayer = false) => {
     if (!file.type.startsWith('image/')) {
       showToast('Elige un archivo de imagen, como JPG, PNG o WebP.');
       return;
@@ -79,11 +96,11 @@ export function App() {
       return;
     }
 
-    const token = ++loadTokenRef.current;
+    const token = addAsLayer ? null : ++loadTokenRef.current;
     const objectUrl = URL.createObjectURL(file);
     try {
       const image = await loadImage(objectUrl);
-      if (token !== loadTokenRef.current) {
+      if (!addAsLayer && token !== loadTokenRef.current) {
         URL.revokeObjectURL(objectUrl);
         return;
       }
@@ -92,32 +109,47 @@ export function App() {
         showToast('La imagen supera el límite de 100 megapíxeles.');
         return;
       }
-      if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current);
-      fileUrlRef.current = objectUrl;
-      photoRef.current = image;
-      setPhoto(image);
-      setMeta({ name: file.name, width: image.naturalWidth, height: image.naturalHeight });
-      setHistogram(createHistogram(image));
-      editor.applyAdjustments({
-        exposure: 0,
-        contrast: 0,
-        highlights: 0,
-        shadows: 0,
-        temperature: 0,
-        saturation: 0,
-      });
-      setCropRatio(null);
-      setRotation(0);
-      setZoom(100);
-      setFlipHorizontal(false);
-      setLayerOpacity(100);
-      setLayerVisible(true);
-      showToast('Imagen lista para editar.');
+      if (addAsLayer) {
+        if (overlayLayers.length >= MAX_IMAGE_LAYERS - 1) {
+          URL.revokeObjectURL(objectUrl);
+          showToast('El documento admite hasta 20 capas en total, incluido el fondo.');
+          return;
+        }
+        const layer: OverlayLayer = {
+          id: window.crypto.randomUUID(), name: file.name, src: objectUrl, image,
+          visible: true, opacity: 100, x: 50, y: 50, scale: 50,
+        };
+        setOverlayLayers((layers) => [...layers, layer]);
+        setSelectedLayerId(layer.id);
+        showToast('Imagen añadida como capa.');
+      } else {
+        if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current);
+        overlayLayers.forEach((layer) => URL.revokeObjectURL(layer.src));
+        setOverlayLayers([]);
+        setSelectedLayerId('base');
+        fileUrlRef.current = objectUrl;
+        photoRef.current = image;
+        setPhoto(image);
+        setMeta({ name: file.name, width: image.naturalWidth, height: image.naturalHeight });
+        setHistogram(createHistogram(image));
+        editor.applyAdjustments(INITIAL_ADJUSTMENTS);
+        setCropRatio(null);
+        setRotation(0);
+        setZoom(100);
+        setFlipHorizontal(false);
+        setLayerOpacity(100);
+        setLayerVisible(true);
+        showToast('Imagen lista para editar.');
+      }
     } catch {
       URL.revokeObjectURL(objectUrl);
       showToast('No se pudo abrir esa imagen. Prueba con otro archivo.');
     }
-  }, [editor, showToast]);
+  }, [editor, overlayLayers, showToast]);
+
+  useEffect(() => {
+    overlayLayersRef.current = overlayLayers;
+  }, [overlayLayers]);
 
   useEffect(() => {
     let cancelled = false;
@@ -132,6 +164,7 @@ export function App() {
     return () => {
       cancelled = true;
       if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current);
+      overlayLayersRef.current.forEach((layer) => URL.revokeObjectURL(layer.src));
     };
   }, [showToast]);
 
@@ -142,8 +175,41 @@ export function App() {
   const frameRatio = cropRatio ?? originalRatio;
   const rotatedFrameRatio = rotation % 180 === 0 ? frameRatio : 1 / frameRatio;
   const frameWidth = Math.max(240, Math.min(980, Math.round(Math.min(650, window.innerHeight * 0.64) * rotatedFrameRatio)));
+  const normalizedRotation = ((rotation % 360) + 360) % 360;
+  const exportScale = Math.min(1, 12000 / Math.max(meta.width, meta.height), Math.sqrt(48000000 / (meta.width * meta.height)));
+  const rotatedWidth = normalizedRotation === 90 || normalizedRotation === 270 ? meta.height : meta.width;
+  const rotatedHeight = normalizedRotation === 90 || normalizedRotation === 270 ? meta.width : meta.height;
+  const exportWidth = cropRatio ? Math.min(rotatedWidth, rotatedHeight * cropRatio) : rotatedWidth;
+  const exportHeight = cropRatio ? Math.min(rotatedHeight, rotatedWidth / cropRatio) : rotatedHeight;
 
   const openPicker = useCallback(() => fileInput.current?.click(), []);
+  const openAddLayerPicker = useCallback(() => addLayerInput.current?.click(), []);
+  const selectedOverlay = overlayLayers.find((layer) => layer.id === selectedLayerId) ?? null;
+  const selectedOpacity = selectedOverlay?.opacity ?? layerOpacity;
+
+  function updateSelectedOverlay(update: Partial<OverlayLayer>) {
+    if (!selectedOverlay) return;
+    setOverlayLayers((layers) => layers.map((layer) => layer.id === selectedOverlay.id ? { ...layer, ...update } : layer));
+  }
+
+  function removeOverlay(id: string) {
+    const layer = overlayLayers.find((item) => item.id === id);
+    if (!layer) return;
+    URL.revokeObjectURL(layer.src);
+    setOverlayLayers((layers) => layers.filter((item) => item.id !== id));
+    if (selectedLayerId === id) setSelectedLayerId('base');
+  }
+
+  function moveOverlay(id: string, step: -1 | 1) {
+    setOverlayLayers((layers) => {
+      const index = layers.findIndex((layer) => layer.id === id);
+      const next = index + step;
+      if (index < 0 || next < 0 || next >= layers.length) return layers;
+      const reordered = [...layers];
+      [reordered[index], reordered[next]] = [reordered[next], reordered[index]];
+      return reordered;
+    });
+  }
 
   const undo = useCallback(() => {
     editor.undo();
@@ -171,7 +237,7 @@ export function App() {
         flipHorizontal,
         opacity: layerOpacity / 100,
         visible: layerVisible,
-      }, editor.adjustments);
+      }, editor.adjustments, overlayLayers);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       const extension = format === 'image/jpeg' ? 'jpg' : format === 'image/png' ? 'png' : 'webp';
@@ -188,7 +254,7 @@ export function App() {
     } finally {
       setIsExporting(false);
     }
-  }, [cropRatio, editor.adjustments, flipHorizontal, layerOpacity, layerVisible, rotation, showToast]);
+  }, [cropRatio, editor.adjustments, flipHorizontal, layerOpacity, layerVisible, overlayLayers, rotation, showToast]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -277,6 +343,11 @@ export function App() {
             if (file) void acceptImage(file);
             event.currentTarget.value = '';
           }} />
+          <input ref={addLayerInput} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            if (file) void acceptImage(file, true);
+            event.currentTarget.value = '';
+          }} />
         </div>
       </header>
 
@@ -342,6 +413,21 @@ export function App() {
                     objectFit: cropRatio ? 'cover' : 'contain',
                   }}
                 />
+                {overlayLayers.map((layer) => (
+                  <img
+                    key={layer.id}
+                    className="photo-preview photo-overlay"
+                    src={layer.src}
+                    alt={layer.name}
+                    draggable={false}
+                    style={{
+                      left: layer.x + '%', top: layer.y + '%', width: layer.scale + '%', height: 'auto',
+                      opacity: layer.visible ? layer.opacity / 100 : 0,
+                      filter: isComparing ? 'none' : filter,
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  />
+                ))}
                 {!layerVisible && <div className="hidden-layer-notice"><Icon name="eye" size={16} /> Capa oculta</div>}
                 {isComparing && <span className="compare-badge">ORIGINAL</span>}
                 {meta.name === 'Quiet coast.svg' && <span className="sample-badge"><Icon name="spark" size={13} /> Imagen de muestra</span>}
@@ -369,6 +455,7 @@ export function App() {
             <button className="reset-button" type="button" onClick={() => {
               if (activeTool === 'adjust' || activeTool === 'looks') editor.reset();
               else if (activeTool === 'crop') { setCropRatio(null); setRotation(0); setFlipHorizontal(false); }
+              else if (selectedOverlay) updateSelectedOverlay({ opacity: 100, visible: true, x: 50, y: 50, scale: 50 });
               else { setLayerOpacity(100); setLayerVisible(true); }
               showToast('Cambios restaurados.');
             }}><Icon name="reset" size={14} /> Restablecer</button>
@@ -457,19 +544,52 @@ export function App() {
             <div className="inspector-content">
               <section className="inspector-section layer-section">
                 <div className="section-heading"><div><span className="eyebrow">DOCUMENTO</span><h2>Capas</h2></div><span className="section-index">04</span></div>
-                <div className="layer-card">
-                  <button className={'layer-visibility' + (layerVisible ? ' is-visible' : '')} type="button" aria-label={layerVisible ? 'Ocultar capa' : 'Mostrar capa'} onClick={() => setLayerVisible((value) => !value)}><Icon name={layerVisible ? 'eye' : 'close'} size={16} /></button>
-                  <span className="layer-thumb"><img src={photo?.src ?? DEMO_IMAGE} alt="" /></span>
-                  <span className="layer-copy"><strong>{meta.name}</strong><small>Imagen · Capa base</small></span>
-                  <span className="layer-lock"><span /></span>
+                <div className="layer-list">
+                  {[...overlayLayers].reverse().map((layer) => (
+                    <div className={'layer-card' + (selectedLayerId === layer.id ? ' is-selected' : '')} key={layer.id}>
+                      <button className={'layer-visibility' + (layer.visible ? ' is-visible' : '')} type="button" aria-label={layer.visible ? 'Ocultar capa' : 'Mostrar capa'} onClick={() => setOverlayLayers((items) => items.map((item) => item.id === layer.id ? { ...item, visible: !item.visible } : item))}><Icon name={layer.visible ? 'eye' : 'close'} size={16} /></button>
+                      <button className="layer-select" type="button" onClick={() => setSelectedLayerId(layer.id)} aria-pressed={selectedLayerId === layer.id}>
+                        <span className="layer-thumb"><img src={layer.src} alt="" /></span>
+                        <span className="layer-copy"><strong>{layer.name}</strong><small>Imagen · Superpuesta</small></span>
+                      </button>
+                      <span className="layer-order">
+                        <button type="button" aria-label="Subir capa" onClick={() => moveOverlay(layer.id, 1)}>↑</button>
+                        <button type="button" aria-label="Bajar capa" onClick={() => moveOverlay(layer.id, -1)}>↓</button>
+                        <button type="button" aria-label="Eliminar capa" onClick={() => removeOverlay(layer.id)}>×</button>
+                      </span>
+                    </div>
+                  ))}
+                  <div className={'layer-card' + (selectedLayerId === 'base' ? ' is-selected' : '')}>
+                    <button className={'layer-visibility' + (layerVisible ? ' is-visible' : '')} type="button" aria-label={layerVisible ? 'Ocultar capa base' : 'Mostrar capa base'} onClick={() => setLayerVisible((value) => !value)}><Icon name={layerVisible ? 'eye' : 'close'} size={16} /></button>
+                    <button className="layer-select" type="button" onClick={() => setSelectedLayerId('base')} aria-pressed={selectedLayerId === 'base'}>
+                      <span className="layer-thumb"><img src={photo?.src ?? DEMO_IMAGE} alt="" /></span>
+                      <span className="layer-copy"><strong>{meta.name}</strong><small>Imagen · Fondo</small></span>
+                    </button>
+                    <span className="layer-lock"><span /></span>
+                  </div>
                 </div>
                 <label className="slider-row opacity-control">
-                  <span className="slider-heading"><span>Opacidad</span><span className="slider-value">{layerOpacity}%</span></span>
-                      <input aria-label="Opacidad de capa" type="range" min="0" max="100" value={layerOpacity} style={{ '--range-progress': layerOpacity + '%' } as CSSProperties} onChange={(event) => setLayerOpacity(Number(event.currentTarget.value))} />
+                  <span className="slider-heading"><span>Opacidad</span><span className="slider-value">{selectedOpacity}%</span></span>
+                  <input aria-label="Opacidad de capa" type="range" min="0" max="100" value={selectedOpacity} style={{ '--range-progress': selectedOpacity + '%' } as CSSProperties} onChange={(event) => selectedOverlay ? updateSelectedOverlay({ opacity: Number(event.currentTarget.value) }) : setLayerOpacity(Number(event.currentTarget.value))} />
                 </label>
-                <button className="add-layer-button" type="button" onClick={openPicker}><Icon name="upload" size={16} /> Reemplazar imagen</button>
+                {selectedOverlay && <>
+                  <label className="slider-row layer-size-control">
+                    <span className="slider-heading"><span>Tamaño</span><span className="slider-value">{selectedOverlay.scale}%</span></span>
+                    <input aria-label="Tamaño de capa" type="range" min="10" max="150" value={selectedOverlay.scale} style={{ '--range-progress': Math.min(100, selectedOverlay.scale / 1.5) + '%' } as CSSProperties} onChange={(event) => updateSelectedOverlay({ scale: Number(event.currentTarget.value) })} />
+                  </label>
+                  <label className="slider-row layer-size-control">
+                    <span className="slider-heading"><span>Posición horizontal</span><span className="slider-value">{selectedOverlay.x}%</span></span>
+                    <input aria-label="Posición horizontal de capa" type="range" min="0" max="100" value={selectedOverlay.x} style={{ '--range-progress': selectedOverlay.x + '%' } as CSSProperties} onChange={(event) => updateSelectedOverlay({ x: Number(event.currentTarget.value) })} />
+                  </label>
+                  <label className="slider-row layer-size-control">
+                    <span className="slider-heading"><span>Posición vertical</span><span className="slider-value">{selectedOverlay.y}%</span></span>
+                    <input aria-label="Posición vertical de capa" type="range" min="0" max="100" value={selectedOverlay.y} style={{ '--range-progress': selectedOverlay.y + '%' } as CSSProperties} onChange={(event) => updateSelectedOverlay({ y: Number(event.currentTarget.value) })} />
+                  </label>
+                </>}
+                <button className="add-layer-button" type="button" onClick={openAddLayerPicker}><Icon name="upload" size={16} /> Añadir imagen</button>
+                <button className="replace-layer-button" type="button" onClick={openPicker}>Reemplazar imagen de fondo</button>
               </section>
-              <div className="inspector-note"><Icon name="info" size={15} /><span>Esta versión usa una capa base. Las máscaras y capas múltiples llegarán más adelante.</span></div>
+              <div className="inspector-note"><Icon name="info" size={15} /><span>Ordena, oculta, cambia el tamaño y coloca hasta 20 capas, incluido el fondo. La exportación combina las capas visibles.</span></div>
             </div>
           )}
 
@@ -481,8 +601,8 @@ export function App() {
       {showExport && photo && (
         <ExportDialog
           fileName={meta.name}
-          width={Math.round((cropRatio ? Math.min(meta.width, meta.height * cropRatio) : meta.width) * Math.min(1, 12000 / Math.max(meta.width, meta.height), Math.sqrt(48000000 / (meta.width * meta.height))))}
-          height={Math.round((cropRatio ? Math.min(meta.height, meta.width / cropRatio) : meta.height) * Math.min(1, 12000 / Math.max(meta.width, meta.height), Math.sqrt(48000000 / (meta.width * meta.height))))}
+          width={Math.round(exportWidth * exportScale)}
+          height={Math.round(exportHeight * exportScale)}
           onClose={() => setShowExport(false)}
           onExport={(format, name, quality) => void exportNow(format, name, quality)}
         />
@@ -491,3 +611,4 @@ export function App() {
     </div>
   );
 }
+
