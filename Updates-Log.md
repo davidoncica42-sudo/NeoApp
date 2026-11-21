@@ -1,15 +1,21 @@
 # Historial de cambios
 
-## 0.1.5 — Agentes de IA
-
--Añadimos Codex para poner el .exe para PC y tabletas
+  ## 0.0.5 (Plataforma)— Lanzamiento de webs la app necesitara cuentas registrdas para la 0.3.0
+  - 
+- ## **Algunos Bugs arreglados (Revision diaria)**
+  - 
 ## 0.?.? — Proximamente...
 -
 -
   ## 0.3.0 - Proximamente: funciones Neón (premium)
-  ## 0.0.5 (Plataforma)— Proximamente: Lanzamiento de webs la app necesitara cuentas registrdas para la 0.3.0
+
 -
 -
+  
+## 0.1.5 — Agentes de IA
+
+-Añadimos Codex para poner el .exe para PC y tabletas
+
 ## 0.2.5 — App lanzada!!!
 
 - Añadimos soporte a tabletas
